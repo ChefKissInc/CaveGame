@@ -21,7 +21,7 @@ fn player_setup(mut commands: Commands) {
         .insert(ExternalImpulse::default())
         .insert(ReadMassProperties::default())
         .insert(LockedAxes::ROTATION_LOCKED)
-        .insert(Collider::capsule_y(0.5, 1.0))
+        .insert(Collider::cuboid(0.5, 1.0, 0.5))
         .insert(Ccd::enabled())
         .insert(Sleeping::disabled())
         .insert(CameraController::default())
@@ -83,7 +83,7 @@ fn control_system(
 
     let xz = Vec3::new(1.0, 0.0, 1.0);
     let rotation = Quat::from_rotation_x(controller.yaw_pitch_roll.y)
-        + Quat::from_rotation_y(controller.yaw_pitch_roll.x);
+        * Quat::from_rotation_y(controller.yaw_pitch_roll.x);
     let right = ((rotation * Vec3::X) * xz).normalize();
     let forward = ((rotation * -Vec3::Z) * xz).normalize();
     let mut desired_velocity = Vec3::ZERO;
