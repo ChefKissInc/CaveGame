@@ -1,0 +1,38 @@
+[package]
+name = "cave-game"
+version = "0.1.0"
+edition = "2021"
+resolver = "2"
+
+[profile.dev.package."*"]
+opt-level = 3
+
+[profile.release]
+lto = true
+strip = true
+codegen-units = 1
+
+[dependencies]
+bevy = { version = "0.8.1", default-features = false, features = [
+  "animation",
+  "bevy_asset",
+  "bevy_gilrs",
+  "bevy_winit",
+  "render",
+  "png",
+  "hdr",
+  "x11",
+] }
+bevy-inspector-egui = { version = "0.13.0", features = [
+  "nightly",
+  "bevy_render",
+] }
+bevy_atmosphere = "0.4.1"
+bevy_rapier3d = { version = "0.17.0", features = [
+  "debug-render",
+  "simd-nightly",
+  "parallel",
+] }
+noise = { version = "0.8.1", features = ["std"] }
+rand = "0.8.5"
+smooth-bevy-cameras = { version = "0.5.0", git = "https://github.com/bonsairobo/smooth-bevy-cameras" }
