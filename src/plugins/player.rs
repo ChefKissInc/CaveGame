@@ -7,6 +7,7 @@ pub struct PlayerPlugin;
 impl Plugin for PlayerPlugin {
     fn build(&self, app: &mut App) {
         app.add_startup_system(player_setup)
+            .add_plugin(AtmospherePlugin)
             .add_system(control_system);
     }
 }
@@ -14,7 +15,6 @@ impl Plugin for PlayerPlugin {
 fn player_setup(mut commands: Commands) {
     commands
         .spawn_bundle(TransformBundle::from(Transform::from_xyz(0.0, 70.0, 0.0)))
-        .insert(AtmosphereCamera(None))
         .insert(RigidBody::Dynamic)
         .insert(Velocity::default())
         .insert(ExternalForce::default())
@@ -26,26 +26,28 @@ fn player_setup(mut commands: Commands) {
         .insert(Sleeping::disabled())
         .insert(CameraController::default())
         .with_children(|v| {
-            v.spawn_bundle(Camera3dBundle::default());
+            v.spawn_bundle(Camera3dBundle::default())
+                .insert(AtmosphereCamera(None));
         });
 }
 
 #[derive(Clone, Component, Copy, Debug)]
 struct CameraController {
     pub mouse_rotate_sensitivity: Vec2,
-    pub yaw_pitch_roll: Vec2,
+    pub yaw_pitch: Vec2,
 }
 
 impl Default for CameraController {
     fn default() -> Self {
         Self {
-            mouse_rotate_sensitivity: Vec2::splat(0.2),
-            yaw_pitch_roll: Vec2::ZERO,
+            mouse_rotate_sensitivity: Vec2::splat(0.01),
+            yaw_pitch: Vec2::ZERO,
         }
     }
 }
 
 const PITCH_BOUND: f32 = std::f32::consts::FRAC_PI_2 - 1E-3;
+const LAG_WEIGHT: f32 = 0.8;
 
 fn control_system(
     keyboard: Res<Input<KeyCode>>,
@@ -61,9 +63,9 @@ fn control_system(
     mut cameras: Query<&mut Transform, (With<Camera3d>, Without<CameraController>)>,
     time: Res<Time>,
 ) {
-    let (mut controller, mass, vel, mut force, mut impulse, mut head_transform) =
+    let (mut controller, mass, vel, mut force, mut impulse, mut transform) =
         controllers.single_mut();
-    let mut transform = cameras.single_mut();
+    let mut head_transform = cameras.single_mut();
     let dt = time.delta_seconds();
 
     let mut cursor_delta = Vec2::ZERO;
@@ -71,19 +73,21 @@ fn control_system(
         cursor_delta -= event.delta;
     }
 
-    if cursor_delta.length_squared() > 1E-6 {
-        cursor_delta = dt * (cursor_delta * controller.mouse_rotate_sensitivity);
-        controller.yaw_pitch_roll += cursor_delta;
-        controller.yaw_pitch_roll.y = controller.yaw_pitch_roll.y.clamp(-PITCH_BOUND, PITCH_BOUND);
-        // Yaw
-        head_transform.rotation = Quat::from_rotation_y(controller.yaw_pitch_roll.x);
-        // Pitch
-        transform.rotation = Quat::from_rotation_x(controller.yaw_pitch_roll.y);
-    }
+    cursor_delta *= controller.mouse_rotate_sensitivity;
+    let old = controller.yaw_pitch;
+    controller.yaw_pitch += cursor_delta;
+    controller.yaw_pitch.y = controller.yaw_pitch.y.clamp(-PITCH_BOUND, PITCH_BOUND);
+    controller.yaw_pitch = old * LAG_WEIGHT + controller.yaw_pitch * (1.0 - LAG_WEIGHT);
+    // Yaw
+    transform.rotation =
+        Quat::from_rotation_y(controller.yaw_pitch.x).lerp(transform.rotation, LAG_WEIGHT);
+    // Pitch
+    head_transform.rotation =
+        Quat::from_rotation_x(controller.yaw_pitch.y).lerp(head_transform.rotation, LAG_WEIGHT);
 
     let xz = Vec3::new(1.0, 0.0, 1.0);
-    let rotation = Quat::from_rotation_x(controller.yaw_pitch_roll.y)
-        * Quat::from_rotation_y(controller.yaw_pitch_roll.x);
+    let rotation = Quat::from_rotation_x(controller.yaw_pitch.y)
+        * Quat::from_rotation_y(controller.yaw_pitch.x);
     let right = ((rotation * Vec3::X) * xz).normalize();
     let forward = ((rotation * -Vec3::Z) * xz).normalize();
     let mut desired_velocity = Vec3::ZERO;
@@ -102,7 +106,7 @@ fn control_system(
     }
 
     desired_velocity = if desired_velocity.length_squared() > 1E-6 {
-        desired_velocity.normalize() * 5.0
+        desired_velocity.normalize() * 8.0
     } else {
         vel.linvel * 0.5 * xz
     };
