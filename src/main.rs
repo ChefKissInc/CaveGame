@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use bevy_inspector_egui::WorldInspectorPlugin;
+// use bevy_inspector_egui::WorldInspectorPlugin;
 use bevy_rapier3d::prelude::*;
 
 mod plugins;
@@ -14,7 +14,7 @@ fn main() {
         .add_plugins(DefaultPlugins)
         .add_plugin(RapierPhysicsPlugin::<NoUserData>::default())
         // .add_plugin(RapierDebugRenderPlugin::default())
-        .add_plugin(WorldInspectorPlugin::new())
+        // .add_plugin(WorldInspectorPlugin::new())
         .add_startup_system(setup)
         .add_plugin(plugins::player::PlayerPlugin)
         .add_plugin(plugins::terrain::TerrainPlugin)

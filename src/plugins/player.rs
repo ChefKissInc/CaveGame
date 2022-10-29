@@ -119,7 +119,7 @@ fn control_system(
     }
 
     // Calculate force - the desired rate of change of momentum for the time period
-    let force_val = impulse_val / dt;
+    let force_val = impulse_val * dt;
     if force_val.length_squared() > 1E-6 {
         force.force = force_val;
     }
