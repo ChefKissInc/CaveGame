@@ -1,6 +1,6 @@
 use noise::{NoiseFn, OpenSimplex};
 
-pub const CHUNK_WIDTH: u32 = 32;
+pub const CHUNK_WIDTH: u32 = 128;
 pub const CHUNK_HEIGHT: u32 = 32;
 
 type VoxelID = u64;
@@ -9,7 +9,7 @@ const AIR: VoxelID = 0;
 
 pub struct World {
     pub simplex: OpenSimplex,
-    pub data: [[[VoxelID; CHUNK_WIDTH as usize]; CHUNK_HEIGHT as usize]; CHUNK_WIDTH as usize],
+    pub data: Vec<Vec<Vec<VoxelID>>>,
 }
 
 type VoxelMeshData = (Vec<[f32; 3]>, Vec<[f32; 3]>, Vec<[f32; 2]>, Vec<u32>);
@@ -19,7 +19,10 @@ impl World {
     pub fn new() -> Self {
         Self {
             simplex: OpenSimplex::new(rand::random()),
-            data: [[[0; CHUNK_WIDTH as usize]; CHUNK_HEIGHT as usize]; CHUNK_WIDTH as usize],
+            data: vec![
+                vec![vec![AIR; CHUNK_WIDTH as usize]; CHUNK_HEIGHT as usize];
+                CHUNK_WIDTH as usize
+            ],
         }
     }
 
@@ -46,10 +49,10 @@ impl World {
         let mut indices = Vec::new();
 
         if self.data[pos.0 as usize][pos.1 as usize][pos.2 as usize] != AIR {
-            for (_, p, n, u) in [
-                // Top
+            for (_, p, n, u) in vec![
+                // Front
                 (
-                    (0i32, 1i32, 0i32),
+                    (0i32, 0i32, 1i32),
                     [
                         [pos.0 as f32 - 0.5, pos.1 as f32 - 0.5, pos.2 as f32 + 0.5],
                         [pos.0 as f32 + 0.5, pos.1 as f32 - 0.5, pos.2 as f32 + 0.5],
@@ -64,9 +67,9 @@ impl World {
                     ],
                     [[0.0, 0.0], [1.0, 0.0], [1.0, 1.0], [0.0, 1.0]],
                 ),
-                // Bottom
+                // Back
                 (
-                    (0i32, -1i32, 0i32),
+                    (0i32, 0i32, -1i32),
                     [
                         [pos.0 as f32 - 0.5, pos.1 as f32 + 0.5, pos.2 as f32 - 0.5],
                         [pos.0 as f32 + 0.5, pos.1 as f32 + 0.5, pos.2 as f32 - 0.5],
@@ -115,9 +118,9 @@ impl World {
                     ],
                     [[1.0, 0.0], [0.0, 0.0], [0.0, 1.0], [1.0, 1.0]],
                 ),
-                // Front
+                // Top
                 (
-                    (0i32, 0i32, 1i32),
+                    (0i32, 1i32, 0i32),
                     [
                         [pos.0 as f32 + 0.5, pos.1 as f32 + 0.5, pos.2 as f32 - 0.5],
                         [pos.0 as f32 - 0.5, pos.1 as f32 + 0.5, pos.2 as f32 - 0.5],
@@ -132,9 +135,9 @@ impl World {
                     ],
                     [[1.0, 0.0], [0.0, 0.0], [0.0, 1.0], [1.0, 1.0]],
                 ),
-                // Back
+                // Bottom
                 (
-                    (0i32, 0i32, -1i32),
+                    (0i32, -1i32, 0i32),
                     [
                         [pos.0 as f32 + 0.5, pos.1 as f32 - 0.5, pos.2 as f32 + 0.5],
                         [pos.0 as f32 - 0.5, pos.1 as f32 - 0.5, pos.2 as f32 + 0.5],

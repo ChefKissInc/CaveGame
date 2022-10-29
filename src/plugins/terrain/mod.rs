@@ -19,7 +19,7 @@ fn terrain_setup(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
-    let mut world = Box::new(world::World::new());
+    let mut world = world::World::new();
     world.generate();
 
     let mut positions = Vec::new();
@@ -28,18 +28,17 @@ fn terrain_setup(
     let mut indices = Vec::new();
     let mut last_index = 0;
 
-    for x in 0..world::CHUNK_WIDTH {
-        for y in 0..world::CHUNK_HEIGHT {
-            for z in 0..world::CHUNK_WIDTH {
-                let data = world.get_voxel_data_for((x, y, z), last_index);
-                let vert_len: u32 = data.0.len().try_into().unwrap();
-                last_index += vert_len;
-                positions.extend_from_slice(&data.0);
-                normals.extend_from_slice(&data.1);
-                uvs.extend_from_slice(&data.2);
-                indices.extend_from_slice(&data.3);
-            }
-        }
+    for pos in (0..world::CHUNK_WIDTH)
+        .flat_map(|x| (0..world::CHUNK_HEIGHT).map(move |y| (x, y)))
+        .flat_map(|(x, y)| (0..world::CHUNK_WIDTH).map(move |z| (x, y, z)))
+    {
+        let data = world.get_voxel_data_for(pos, last_index);
+        let vert_len: u32 = data.0.len().try_into().unwrap();
+        last_index += vert_len;
+        positions.extend_from_slice(&data.0);
+        normals.extend_from_slice(&data.1);
+        uvs.extend_from_slice(&data.2);
+        indices.extend_from_slice(&data.3);
     }
 
     let mut mesh = Mesh::new(PrimitiveTopology::TriangleList);

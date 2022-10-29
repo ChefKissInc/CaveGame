@@ -35,6 +35,7 @@ fn hud_setup(mut commands: Commands, asset_server: Res<AssetServer>) {
                 }),
             ])
             .with_style(Style {
+                position_type: PositionType::Absolute,
                 align_self: AlignSelf::FlexEnd,
                 margin: UiRect::all(Val::Percent(0.5)),
                 ..default()
