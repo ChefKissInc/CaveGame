@@ -13,7 +13,6 @@ fn main() {
         })
         .add_plugins(DefaultPlugins)
         .add_plugin(RapierPhysicsPlugin::<NoUserData>::default())
-        // .add_plugin(RapierDebugRenderPlugin::default())
         // .add_plugin(WorldInspectorPlugin::new())
         .add_startup_system(setup)
         .add_plugin(plugins::player::PlayerPlugin)

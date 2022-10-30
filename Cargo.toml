@@ -28,10 +28,6 @@ bevy-inspector-egui = { version = "0.13.0", features = [
   "bevy_render",
 ] }
 bevy_atmosphere = "0.4.1"
-bevy_rapier3d = { version = "0.17.0", features = [
-  "debug-render",
-  "simd-nightly",
-  "parallel",
-] }
+bevy_rapier3d = { version = "0.17.0", features = ["simd-nightly", "parallel"] }
 noise = { version = "0.8.2", features = ["std"] }
 rand = "0.8.5"
