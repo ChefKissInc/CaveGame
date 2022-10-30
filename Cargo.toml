@@ -29,5 +29,7 @@ bevy-inspector-egui = { version = "0.13.0", features = [
 ] }
 bevy_atmosphere = "0.4.1"
 bevy_rapier3d = { version = "0.17.0", features = ["simd-nightly", "parallel"] }
+iyes_loopless = "0.8.0"
+iyes_progress = { version = "0.6.0", features = ["iyes_loopless", "assets"] }
 noise = { version = "0.8.2", features = ["std"] }
 rand = "0.8.5"
