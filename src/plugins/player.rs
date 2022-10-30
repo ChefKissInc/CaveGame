@@ -26,8 +26,11 @@ fn player_setup(mut commands: Commands) {
         .insert(Sleeping::disabled())
         .insert(PlayerController::default())
         .with_children(|v| {
-            v.spawn_bundle(Camera3dBundle::default())
-                .insert(AtmosphereCamera(None));
+            v.spawn_bundle(Camera3dBundle {
+                transform: Transform::from_xyz(0.0, 1.0, 0.0),
+                ..default()
+            })
+            .insert(AtmosphereCamera(None));
         });
 }
 
@@ -97,6 +100,8 @@ fn control_system(
         (KeyCode::S, -forward),
         (KeyCode::D, right),
         (KeyCode::A, -right),
+        (KeyCode::Space, Vec3::Y),
+        (KeyCode::LShift, -Vec3::Y),
     ]
     .iter()
     .filter(|(key, _)| keyboard.pressed(*key))
