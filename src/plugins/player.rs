@@ -7,6 +7,7 @@ pub struct PlayerPlugin;
 impl Plugin for PlayerPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugin(AtmospherePlugin)
+            .insert_resource(AtmosphereSettings { resolution: 1024 })
             .add_startup_system(player_setup)
             .add_system(control_system);
     }
@@ -25,6 +26,7 @@ fn player_setup(mut commands: Commands) {
         .insert(Ccd::enabled())
         .insert(Sleeping::disabled())
         .insert(PlayerController::default())
+        .insert_bundle(VisibilityBundle::default())
         .with_children(|v| {
             v.spawn_bundle(Camera3dBundle {
                 transform: Transform::from_xyz(0.0, 1.0, 0.0),
