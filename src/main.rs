@@ -28,8 +28,8 @@ fn setup(mut commands: Commands, mut windows: ResMut<Windows>) {
 
     commands.spawn_bundle(DirectionalLightBundle {
         directional_light: DirectionalLight {
-            illuminance: 10000.0,
-            ..Default::default()
+            illuminance: 32000.0,
+            ..default()
         },
         transform: Transform {
             translation: Vec3::new(0.0, 5.0, 0.0),
@@ -39,8 +39,8 @@ fn setup(mut commands: Commands, mut windows: ResMut<Windows>) {
                 std::f32::consts::PI / 4.0,
                 0.0,
             ),
-            ..Default::default()
+            ..default()
         },
-        ..Default::default()
+        ..default()
     });
 }
