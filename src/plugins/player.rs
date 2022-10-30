@@ -6,8 +6,8 @@ pub struct PlayerPlugin;
 
 impl Plugin for PlayerPlugin {
     fn build(&self, app: &mut App) {
-        app.add_startup_system(player_setup)
-            .add_plugin(AtmospherePlugin)
+        app.add_plugin(AtmospherePlugin)
+            .add_startup_system(player_setup)
             .add_system(control_system);
     }
 }
@@ -24,7 +24,7 @@ fn player_setup(mut commands: Commands) {
         .insert(Collider::cuboid(0.5, 1.0, 0.5))
         .insert(Ccd::enabled())
         .insert(Sleeping::disabled())
-        .insert(CameraController::default())
+        .insert(PlayerController::default())
         .with_children(|v| {
             v.spawn_bundle(Camera3dBundle::default())
                 .insert(AtmosphereCamera(None));
@@ -32,12 +32,12 @@ fn player_setup(mut commands: Commands) {
 }
 
 #[derive(Clone, Component, Copy, Debug)]
-struct CameraController {
+struct PlayerController {
     pub mouse_rotate_sensitivity: Vec2,
     pub yaw_pitch: Vec2,
 }
 
-impl Default for CameraController {
+impl Default for PlayerController {
     fn default() -> Self {
         Self {
             mouse_rotate_sensitivity: Vec2::splat(0.01),
@@ -53,14 +53,14 @@ fn control_system(
     keyboard: Res<Input<KeyCode>>,
     mut mouse_motion_events: EventReader<MouseMotion>,
     mut controllers: Query<(
-        &mut CameraController,
+        &mut PlayerController,
         &ReadMassProperties,
         &Velocity,
         &mut ExternalForce,
         &mut ExternalImpulse,
         &mut Transform,
     )>,
-    mut cameras: Query<&mut Transform, (With<Camera3d>, Without<CameraController>)>,
+    mut cameras: Query<&mut Transform, (With<Camera3d>, Without<PlayerController>)>,
     time: Res<Time>,
 ) {
     let (mut controller, mass, vel, mut force, mut impulse, mut transform) =
