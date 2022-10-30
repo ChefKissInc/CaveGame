@@ -27,8 +27,21 @@ fn setup(mut commands: Commands, mut windows: ResMut<Windows>) {
     window.set_cursor_lock_mode(true);
     window.set_cursor_visibility(false);
 
-    commands.insert_resource(AmbientLight {
-        brightness: 0.7,
-        ..default()
+    commands.spawn_bundle(DirectionalLightBundle {
+        directional_light: DirectionalLight {
+            illuminance: 10000.0,
+            ..Default::default()
+        },
+        transform: Transform {
+            translation: Vec3::new(0.0, 5.0, 0.0),
+            rotation: Quat::from_euler(
+                EulerRot::XYZ,
+                -std::f32::consts::PI / 4.0,
+                std::f32::consts::PI / 4.0,
+                0.0,
+            ),
+            ..Default::default()
+        },
+        ..Default::default()
     });
 }
