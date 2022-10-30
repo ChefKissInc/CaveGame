@@ -1,3 +1,7 @@
+use bevy::{
+    prelude::*,
+    render::{mesh::Indices, render_resource::PrimitiveTopology},
+};
 use noise::{NoiseFn, OpenSimplex};
 
 pub const CHUNK_WIDTH: usize = 128;
@@ -7,14 +11,12 @@ type VoxelID = u64;
 
 const AIR: VoxelID = 0;
 
-pub struct World {
+pub struct Chunk {
     pub simplex: OpenSimplex,
     pub data: Vec<Vec<Vec<VoxelID>>>,
 }
 
-type VoxelMeshData = (Vec<[f32; 3]>, Vec<[f32; 3]>, Vec<[f32; 2]>, Vec<u32>);
-
-impl World {
+impl Chunk {
     #[must_use]
     pub fn new() -> Self {
         Self {
@@ -39,165 +41,172 @@ impl World {
         }
     }
 
-    pub fn get_voxel_data_for(
-        &self,
-        pos: (usize, usize, usize),
-        mut last_index: u32,
-    ) -> VoxelMeshData {
+    pub fn create_mesh(&self) -> Mesh {
         let mut positions = Vec::new();
         let mut normals = Vec::new();
         let mut uvs = Vec::new();
         let mut indices = Vec::new();
+        let mut last_index = 0;
 
-        if self.data[pos.0][pos.1][pos.2] != AIR {
-            for (_, p, n, u) in vec![
-                // Front
-                (
-                    (0i32, 0i32, 1i32),
-                    [
-                        [pos.0 as f32 - 0.5, pos.1 as f32 - 0.5, pos.2 as f32 + 0.5],
-                        [pos.0 as f32 + 0.5, pos.1 as f32 - 0.5, pos.2 as f32 + 0.5],
-                        [pos.0 as f32 + 0.5, pos.1 as f32 + 0.5, pos.2 as f32 + 0.5],
-                        [pos.0 as f32 - 0.5, pos.1 as f32 + 0.5, pos.2 as f32 + 0.5],
-                    ],
-                    [
-                        [0.0, 0.0, 1.0],
-                        [0.0, 0.0, 1.0],
-                        [0.0, 0.0, 1.0],
-                        [0.0, 0.0, 1.0],
-                    ],
-                    [[0.0, 0.0], [1.0, 0.0], [1.0, 1.0], [0.0, 1.0]],
-                ),
-                // Back
-                (
-                    (0i32, 0i32, -1i32),
-                    [
-                        [pos.0 as f32 - 0.5, pos.1 as f32 + 0.5, pos.2 as f32 - 0.5],
-                        [pos.0 as f32 + 0.5, pos.1 as f32 + 0.5, pos.2 as f32 - 0.5],
-                        [pos.0 as f32 + 0.5, pos.1 as f32 - 0.5, pos.2 as f32 - 0.5],
-                        [pos.0 as f32 - 0.5, pos.1 as f32 - 0.5, pos.2 as f32 - 0.5],
-                    ],
-                    [
-                        [0.0, 0.0, -1.0],
-                        [0.0, 0.0, -1.0],
-                        [0.0, 0.0, -1.0],
-                        [0.0, 0.0, -1.0],
-                    ],
-                    [[1.0, 0.0], [0.0, 0.0], [0.0, 1.0], [1.0, 1.0]],
-                ),
-                // Right
-                (
-                    (1i32, 0i32, 0i32),
-                    [
-                        [pos.0 as f32 + 0.5, pos.1 as f32 - 0.5, pos.2 as f32 - 0.5],
-                        [pos.0 as f32 + 0.5, pos.1 as f32 + 0.5, pos.2 as f32 - 0.5],
-                        [pos.0 as f32 + 0.5, pos.1 as f32 + 0.5, pos.2 as f32 + 0.5],
-                        [pos.0 as f32 + 0.5, pos.1 as f32 - 0.5, pos.2 as f32 + 0.5],
-                    ],
-                    [
-                        [1.0, 0.0, 0.0],
-                        [1.0, 0.0, 0.0],
-                        [1.0, 0.0, 0.0],
-                        [1.0, 0.0, 0.0],
-                    ],
-                    [[0.0, 0.0], [1.0, 0.0], [1.0, 1.0], [0.0, 1.0]],
-                ),
-                // Left
-                (
-                    (-1i32, 0i32, 0i32),
-                    [
-                        [pos.0 as f32 - 0.5, pos.1 as f32 - 0.5, pos.2 as f32 + 0.5],
-                        [pos.0 as f32 - 0.5, pos.1 as f32 + 0.5, pos.2 as f32 + 0.5],
-                        [pos.0 as f32 - 0.5, pos.1 as f32 + 0.5, pos.2 as f32 - 0.5],
-                        [pos.0 as f32 - 0.5, pos.1 as f32 - 0.5, pos.2 as f32 - 0.5],
-                    ],
-                    [
-                        [-1.0, 0.0, 0.0],
-                        [-1.0, 0.0, 0.0],
-                        [-1.0, 0.0, 0.0],
-                        [-1.0, 0.0, 0.0],
-                    ],
-                    [[1.0, 0.0], [0.0, 0.0], [0.0, 1.0], [1.0, 1.0]],
-                ),
-                // Top
-                (
-                    (0i32, 1i32, 0i32),
-                    [
-                        [pos.0 as f32 + 0.5, pos.1 as f32 + 0.5, pos.2 as f32 - 0.5],
-                        [pos.0 as f32 - 0.5, pos.1 as f32 + 0.5, pos.2 as f32 - 0.5],
-                        [pos.0 as f32 - 0.5, pos.1 as f32 + 0.5, pos.2 as f32 + 0.5],
-                        [pos.0 as f32 + 0.5, pos.1 as f32 + 0.5, pos.2 as f32 + 0.5],
-                    ],
-                    [
-                        [0.0, 1.0, 0.0],
-                        [0.0, 1.0, 0.0],
-                        [0.0, 1.0, 0.0],
-                        [0.0, 1.0, 0.0],
-                    ],
-                    [[1.0, 0.0], [0.0, 0.0], [0.0, 1.0], [1.0, 1.0]],
-                ),
-                // Bottom
-                (
-                    (0i32, -1i32, 0i32),
-                    [
-                        [pos.0 as f32 + 0.5, pos.1 as f32 - 0.5, pos.2 as f32 + 0.5],
-                        [pos.0 as f32 - 0.5, pos.1 as f32 - 0.5, pos.2 as f32 + 0.5],
-                        [pos.0 as f32 - 0.5, pos.1 as f32 - 0.5, pos.2 as f32 - 0.5],
-                        [pos.0 as f32 + 0.5, pos.1 as f32 - 0.5, pos.2 as f32 - 0.5],
-                    ],
-                    [
-                        [0.0, -1.0, 0.0],
-                        [0.0, -1.0, 0.0],
-                        [0.0, -1.0, 0.0],
-                        [0.0, -1.0, 0.0],
-                    ],
-                    [[0.0, 0.0], [1.0, 0.0], [1.0, 1.0], [0.0, 1.032]],
-                ),
-            ]
-            .iter()
-            .filter(|(face, _, _, _)| {
-                if face.0.wrapping_abs() as u32 as usize > pos.0
-                    || face.1.wrapping_abs() as u32 as usize > pos.1
-                    || face.2.wrapping_abs() as u32 as usize > pos.2
-                {
-                    true
-                } else {
-                    fn add(u: usize, i: i32) -> usize {
-                        if i.is_negative() {
-                            u - i.wrapping_abs() as u32 as usize
-                        } else {
-                            u + i as usize
+        for pos in (0..CHUNK_WIDTH)
+            .flat_map(|x| (0..CHUNK_HEIGHT).map(move |y| (x, y)))
+            .flat_map(|(x, y)| (0..CHUNK_WIDTH).map(move |z| (x, y, z)))
+        {
+            if self.data[pos.0][pos.1][pos.2] != AIR {
+                for (_, p, n, u) in vec![
+                    // Front
+                    (
+                        (0i32, 0i32, 1i32),
+                        [
+                            [pos.0 as f32 - 0.5, pos.1 as f32 - 0.5, pos.2 as f32 + 0.5],
+                            [pos.0 as f32 + 0.5, pos.1 as f32 - 0.5, pos.2 as f32 + 0.5],
+                            [pos.0 as f32 + 0.5, pos.1 as f32 + 0.5, pos.2 as f32 + 0.5],
+                            [pos.0 as f32 - 0.5, pos.1 as f32 + 0.5, pos.2 as f32 + 0.5],
+                        ],
+                        [
+                            [0.0, 0.0, 1.0],
+                            [0.0, 0.0, 1.0],
+                            [0.0, 0.0, 1.0],
+                            [0.0, 0.0, 1.0],
+                        ],
+                        [[0.0, 0.0], [1.0, 0.0], [1.0, 1.0], [0.0, 1.0]],
+                    ),
+                    // Back
+                    (
+                        (0i32, 0i32, -1i32),
+                        [
+                            [pos.0 as f32 - 0.5, pos.1 as f32 + 0.5, pos.2 as f32 - 0.5],
+                            [pos.0 as f32 + 0.5, pos.1 as f32 + 0.5, pos.2 as f32 - 0.5],
+                            [pos.0 as f32 + 0.5, pos.1 as f32 - 0.5, pos.2 as f32 - 0.5],
+                            [pos.0 as f32 - 0.5, pos.1 as f32 - 0.5, pos.2 as f32 - 0.5],
+                        ],
+                        [
+                            [0.0, 0.0, -1.0],
+                            [0.0, 0.0, -1.0],
+                            [0.0, 0.0, -1.0],
+                            [0.0, 0.0, -1.0],
+                        ],
+                        [[1.0, 0.0], [0.0, 0.0], [0.0, 1.0], [1.0, 1.0]],
+                    ),
+                    // Right
+                    (
+                        (1i32, 0i32, 0i32),
+                        [
+                            [pos.0 as f32 + 0.5, pos.1 as f32 - 0.5, pos.2 as f32 - 0.5],
+                            [pos.0 as f32 + 0.5, pos.1 as f32 + 0.5, pos.2 as f32 - 0.5],
+                            [pos.0 as f32 + 0.5, pos.1 as f32 + 0.5, pos.2 as f32 + 0.5],
+                            [pos.0 as f32 + 0.5, pos.1 as f32 - 0.5, pos.2 as f32 + 0.5],
+                        ],
+                        [
+                            [1.0, 0.0, 0.0],
+                            [1.0, 0.0, 0.0],
+                            [1.0, 0.0, 0.0],
+                            [1.0, 0.0, 0.0],
+                        ],
+                        [[0.0, 0.0], [1.0, 0.0], [1.0, 1.0], [0.0, 1.0]],
+                    ),
+                    // Left
+                    (
+                        (-1i32, 0i32, 0i32),
+                        [
+                            [pos.0 as f32 - 0.5, pos.1 as f32 - 0.5, pos.2 as f32 + 0.5],
+                            [pos.0 as f32 - 0.5, pos.1 as f32 + 0.5, pos.2 as f32 + 0.5],
+                            [pos.0 as f32 - 0.5, pos.1 as f32 + 0.5, pos.2 as f32 - 0.5],
+                            [pos.0 as f32 - 0.5, pos.1 as f32 - 0.5, pos.2 as f32 - 0.5],
+                        ],
+                        [
+                            [-1.0, 0.0, 0.0],
+                            [-1.0, 0.0, 0.0],
+                            [-1.0, 0.0, 0.0],
+                            [-1.0, 0.0, 0.0],
+                        ],
+                        [[1.0, 0.0], [0.0, 0.0], [0.0, 1.0], [1.0, 1.0]],
+                    ),
+                    // Top
+                    (
+                        (0i32, 1i32, 0i32),
+                        [
+                            [pos.0 as f32 + 0.5, pos.1 as f32 + 0.5, pos.2 as f32 - 0.5],
+                            [pos.0 as f32 - 0.5, pos.1 as f32 + 0.5, pos.2 as f32 - 0.5],
+                            [pos.0 as f32 - 0.5, pos.1 as f32 + 0.5, pos.2 as f32 + 0.5],
+                            [pos.0 as f32 + 0.5, pos.1 as f32 + 0.5, pos.2 as f32 + 0.5],
+                        ],
+                        [
+                            [0.0, 1.0, 0.0],
+                            [0.0, 1.0, 0.0],
+                            [0.0, 1.0, 0.0],
+                            [0.0, 1.0, 0.0],
+                        ],
+                        [[1.0, 0.0], [0.0, 0.0], [0.0, 1.0], [1.0, 1.0]],
+                    ),
+                    // Bottom
+                    (
+                        (0i32, -1i32, 0i32),
+                        [
+                            [pos.0 as f32 + 0.5, pos.1 as f32 - 0.5, pos.2 as f32 + 0.5],
+                            [pos.0 as f32 - 0.5, pos.1 as f32 - 0.5, pos.2 as f32 + 0.5],
+                            [pos.0 as f32 - 0.5, pos.1 as f32 - 0.5, pos.2 as f32 - 0.5],
+                            [pos.0 as f32 + 0.5, pos.1 as f32 - 0.5, pos.2 as f32 - 0.5],
+                        ],
+                        [
+                            [0.0, -1.0, 0.0],
+                            [0.0, -1.0, 0.0],
+                            [0.0, -1.0, 0.0],
+                            [0.0, -1.0, 0.0],
+                        ],
+                        [[0.0, 0.0], [1.0, 0.0], [1.0, 1.0], [0.0, 1.032]],
+                    ),
+                ]
+                .iter()
+                .filter(|(face, _, _, _)| {
+                    if face.0.wrapping_abs() as u32 as usize > pos.0
+                        || face.1.wrapping_abs() as u32 as usize > pos.1
+                        || face.2.wrapping_abs() as u32 as usize > pos.2
+                    {
+                        true
+                    } else {
+                        fn add(u: usize, i: i32) -> usize {
+                            if i.is_negative() {
+                                u - i.wrapping_abs() as u32 as usize
+                            } else {
+                                u + i as usize
+                            }
                         }
+
+                        let x: usize = add(pos.0, face.0);
+                        let y: usize = add(pos.1, face.1);
+                        let z: usize = add(pos.2, face.2);
+
+                        matches!(
+                            self.data
+                                .get(x)
+                                .and_then(|v| v.get(y))
+                                .and_then(|v| v.get(z)),
+                            None | Some(&AIR)
+                        )
                     }
-
-                    let x: usize = add(pos.0, face.0);
-                    let y: usize = add(pos.1, face.1);
-                    let z: usize = add(pos.2, face.2);
-
-                    matches!(
-                        self.data
-                            .get(x)
-                            .and_then(|v| v.get(y))
-                            .and_then(|v| v.get(z)),
-                        None | Some(&AIR)
-                    )
+                }) {
+                    positions.extend_from_slice(p);
+                    normals.extend_from_slice(n);
+                    uvs.extend_from_slice(u);
+                    indices.extend_from_slice(&[
+                        last_index,
+                        last_index + 1,
+                        last_index + 2,
+                        last_index + 2,
+                        last_index + 3,
+                        last_index,
+                    ]);
+                    last_index += 4;
                 }
-            }) {
-                positions.extend_from_slice(p);
-                normals.extend_from_slice(n);
-                uvs.extend_from_slice(u);
-                indices.extend_from_slice(&[
-                    last_index,
-                    last_index + 1,
-                    last_index + 2,
-                    last_index + 2,
-                    last_index + 3,
-                    last_index,
-                ]);
-                last_index += 4;
             }
         }
 
-        (positions, normals, uvs, indices)
+        let mut mesh = Mesh::new(PrimitiveTopology::TriangleList);
+        mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, positions);
+        mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL, normals);
+        mesh.insert_attribute(Mesh::ATTRIBUTE_UV_0, uvs);
+        mesh.set_indices(Some(Indices::U32(indices)));
+        mesh
     }
 }
