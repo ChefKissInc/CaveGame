@@ -1,7 +1,7 @@
 use noise::{NoiseFn, OpenSimplex};
 
-pub const CHUNK_WIDTH: u32 = 128;
-pub const CHUNK_HEIGHT: u32 = 32;
+pub const CHUNK_WIDTH: usize = 128;
+pub const CHUNK_HEIGHT: usize = 32;
 
 type VoxelID = u64;
 
@@ -19,10 +19,7 @@ impl World {
     pub fn new() -> Self {
         Self {
             simplex: OpenSimplex::new(rand::random()),
-            data: vec![
-                vec![vec![AIR; CHUNK_WIDTH as usize]; CHUNK_HEIGHT as usize];
-                CHUNK_WIDTH as usize
-            ],
+            data: vec![vec![vec![AIR; CHUNK_WIDTH]; CHUNK_HEIGHT]; CHUNK_WIDTH],
         }
     }
 
@@ -42,13 +39,17 @@ impl World {
         }
     }
 
-    pub fn get_voxel_data_for(&self, pos: (u32, u32, u32), mut last_index: u32) -> VoxelMeshData {
+    pub fn get_voxel_data_for(
+        &self,
+        pos: (usize, usize, usize),
+        mut last_index: u32,
+    ) -> VoxelMeshData {
         let mut positions = Vec::new();
         let mut normals = Vec::new();
         let mut uvs = Vec::new();
         let mut indices = Vec::new();
 
-        if self.data[pos.0 as usize][pos.1 as usize][pos.2 as usize] != AIR {
+        if self.data[pos.0][pos.1][pos.2] != AIR {
             for (_, p, n, u) in vec![
                 // Front
                 (
@@ -155,9 +156,9 @@ impl World {
             ]
             .iter()
             .filter(|(face, _, _, _)| {
-                if face.0.wrapping_abs() as u32 > pos.0
-                    || face.1.wrapping_abs() as u32 > pos.1
-                    || face.2.wrapping_abs() as u32 > pos.2
+                if face.0.wrapping_abs() as u32 as usize > pos.0
+                    || face.1.wrapping_abs() as u32 as usize > pos.1
+                    || face.2.wrapping_abs() as u32 as usize > pos.2
                 {
                     true
                 } else {
@@ -169,24 +170,17 @@ impl World {
                         }
                     }
 
-                    let x: usize = add(pos.0 as usize, face.0);
-                    let y: usize = add(pos.1 as usize, face.1);
-                    let z: usize = add(pos.2 as usize, face.2);
+                    let x: usize = add(pos.0, face.0);
+                    let y: usize = add(pos.1, face.1);
+                    let z: usize = add(pos.2, face.2);
 
-                    if x >= CHUNK_WIDTH as usize
-                        || y >= CHUNK_HEIGHT as usize
-                        || z >= CHUNK_WIDTH as usize
-                    {
-                        true
-                    } else {
-                        matches!(
-                            self.data
-                                .get(x)
-                                .and_then(|v| v.get(y))
-                                .and_then(|v| v.get(z)),
-                            None | Some(&AIR)
-                        )
-                    }
+                    matches!(
+                        self.data
+                            .get(x)
+                            .and_then(|v| v.get(y))
+                            .and_then(|v| v.get(z)),
+                        None | Some(&AIR)
+                    )
                 }
             }) {
                 positions.extend_from_slice(p);
