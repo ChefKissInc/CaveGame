@@ -1,5 +1,6 @@
 use bevy::{prelude::*, render::view::NoFrustumCulling};
 use bevy_rapier3d::prelude::*;
+use noise::OpenSimplex;
 
 pub mod world;
 
@@ -16,8 +17,9 @@ fn terrain_setup(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
+    let simplex = OpenSimplex::new(rand::random());
     let mut chunk = world::Chunk::new();
-    chunk.generate();
+    chunk.generate(&simplex);
     let mesh = chunk.create_mesh();
 
     commands

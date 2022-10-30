@@ -14,7 +14,7 @@ impl Plugin for PlayerPlugin {
 
 fn player_setup(mut commands: Commands) {
     commands
-        .spawn_bundle(TransformBundle::from(Transform::from_xyz(0.0, 70.0, 0.0)))
+        .spawn_bundle(TransformBundle::from(Transform::from_xyz(0.0, 138.0, 0.0)))
         .insert(RigidBody::Dynamic)
         .insert(Velocity::default())
         .insert(ExternalForce::default())

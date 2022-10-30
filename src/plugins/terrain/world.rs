@@ -4,40 +4,36 @@ use bevy::{
 };
 use noise::{NoiseFn, OpenSimplex};
 
-pub const CHUNK_WIDTH: usize = 128;
-pub const CHUNK_HEIGHT: usize = 32;
+pub const CHUNK_WIDTH: usize = 16;
+pub const CHUNK_HEIGHT: usize = 256;
 
 type VoxelID = u64;
 
-const AIR: VoxelID = 0;
-
 pub struct Chunk {
-    pub simplex: OpenSimplex,
-    pub data: Vec<Vec<Vec<VoxelID>>>,
+    pub data: Vec<Vec<Vec<Option<VoxelID>>>>,
 }
 
 impl Chunk {
     #[must_use]
     pub fn new() -> Self {
         Self {
-            simplex: OpenSimplex::new(rand::random()),
-            data: vec![vec![vec![AIR; CHUNK_WIDTH]; CHUNK_HEIGHT]; CHUNK_WIDTH],
+            data: vec![vec![vec![None; CHUNK_WIDTH]; CHUNK_HEIGHT]; CHUNK_WIDTH],
         }
     }
 
-    pub fn generate(&mut self) {
+    pub fn generate(&mut self, noise: &OpenSimplex) {
         for (x, y, z) in (0..CHUNK_WIDTH)
-            .flat_map(|x| (0..CHUNK_HEIGHT).map(move |y| (x, y)))
+            .flat_map(|x| (0..CHUNK_HEIGHT / 2).map(move |y| (x, y)))
             .flat_map(|(x, y)| (0..CHUNK_WIDTH).map(move |z| (x as f32, y as f32, z as f32)))
             .filter(|&(x, y, z)| {
-                self.simplex.get([
+                noise.get([
                     f64::from(x) / 16.0,
                     f64::from(y) / 16.0,
                     f64::from(z) / 16.0,
                 ]) >= 0.0
             })
         {
-            self.data[x as usize][y as usize][z as usize] = 1;
+            self.data[x as usize][y as usize][z as usize] = Some(1);
         }
     }
 
@@ -52,7 +48,7 @@ impl Chunk {
             .flat_map(|x| (0..CHUNK_HEIGHT).map(move |y| (x, y)))
             .flat_map(|(x, y)| (0..CHUNK_WIDTH).map(move |z| (x, y, z)))
         {
-            if self.data[pos.0][pos.1][pos.2] != AIR {
+            if self.data[pos.0][pos.1][pos.2].is_some() {
                 for (_, p, n, u) in vec![
                     // Front
                     (
@@ -182,7 +178,7 @@ impl Chunk {
                                 .get(x)
                                 .and_then(|v| v.get(y))
                                 .and_then(|v| v.get(z)),
-                            None | Some(&AIR)
+                            None | Some(None)
                         )
                     }
                 }) {
