@@ -52,7 +52,7 @@ fn terrain_setup(
         .insert(Collider::from_bevy_mesh(&mesh, &ComputedColliderShape::TriMesh).unwrap())
         .insert_bundle(PbrBundle {
             mesh: meshes.add(mesh),
-            material: materials.add(Color::DARK_GREEN.into()),
+            material: materials.add(Color::SEA_GREEN.into()),
             ..default()
         })
         .insert(NoFrustumCulling);
