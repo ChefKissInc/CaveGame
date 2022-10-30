@@ -21,15 +21,15 @@ impl Chunk {
         }
     }
 
-    pub fn generate(&mut self, noise: &OpenSimplex) {
+    pub fn generate(&mut self, noise: &OpenSimplex, off_pos: (usize, usize)) {
         for (x, y, z) in (0..CHUNK_WIDTH)
             .flat_map(|x| (0..CHUNK_HEIGHT / 2).map(move |y| (x, y)))
             .flat_map(|(x, y)| (0..CHUNK_WIDTH).map(move |z| (x as f32, y as f32, z as f32)))
             .filter(|&(x, y, z)| {
                 noise.get([
-                    f64::from(x) / 16.0,
+                    (off_pos.0 as f64 + f64::from(x)) / 16.0,
                     f64::from(y) / 16.0,
-                    f64::from(z) / 16.0,
+                    (off_pos.1 as f64 + f64::from(z)) / 16.0,
                 ]) >= 0.0
             })
         {

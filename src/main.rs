@@ -1,4 +1,4 @@
-use bevy::prelude::*;
+use bevy::{prelude::*, render::texture::ImageSettings};
 // use bevy_inspector_egui::WorldInspectorPlugin;
 use bevy_rapier3d::prelude::*;
 
@@ -8,16 +8,17 @@ fn main() {
     App::new()
         .insert_resource(Msaa { samples: 4 })
         .insert_resource(WindowDescriptor {
-            title: "Minecraft 420".to_owned(),
+            title: "cave game".to_owned(),
             ..default()
         })
+        .insert_resource(ImageSettings::default_nearest())
         .add_plugins(DefaultPlugins)
         .add_plugin(RapierPhysicsPlugin::<NoUserData>::default())
         // .add_plugin(WorldInspectorPlugin::new())
         .add_startup_system(setup)
-        .add_plugin(plugins::player::PlayerPlugin)
         .add_plugin(plugins::terrain::TerrainPlugin)
         .add_plugin(plugins::hud::HUDPlugin)
+        .add_plugin(plugins::player::PlayerPlugin)
         .run();
 }
 
