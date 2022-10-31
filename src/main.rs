@@ -17,7 +17,7 @@ fn main() {
         // .add_plugin(WorldInspectorPlugin::new())
         .add_startup_system(setup)
         .add_plugin(plugins::terrain::TerrainPlugin)
-        .add_plugin(plugins::hud::HUDPlugin)
+        .add_plugin(plugins::hud::HudPlugin)
         .add_plugin(plugins::player::PlayerPlugin)
         .run();
 }

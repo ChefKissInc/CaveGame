@@ -3,9 +3,9 @@ use bevy::{
     prelude::*,
 };
 
-pub struct HUDPlugin;
+pub struct HudPlugin;
 
-impl Plugin for HUDPlugin {
+impl Plugin for HudPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugin(FrameTimeDiagnosticsPlugin::default())
             .add_startup_system(hud_setup)

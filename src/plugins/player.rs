@@ -1,19 +1,45 @@
-use bevy::{input::mouse::MouseMotion, prelude::*};
+use bevy::prelude::*;
 use bevy_atmosphere::prelude::*;
 use bevy_rapier3d::prelude::*;
+use leafwing_input_manager::prelude::*;
 
 pub struct PlayerPlugin;
+
+#[derive(Actionlike, Clone, Copy)]
+enum PlayerInputMap {
+    PanCamera,
+    MoveForward,
+    MoveBackwards,
+    MoveLeft,
+    MoveRight,
+    Run,
+    Jump,
+    Crouch,
+}
 
 impl Plugin for PlayerPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugin(AtmospherePlugin)
             .insert_resource(AtmosphereSettings { resolution: 1024 })
+            .add_plugin(InputManagerPlugin::<PlayerInputMap>::default())
             .add_startup_system(player_setup)
             .add_system(control_system);
     }
 }
 
 fn player_setup(mut commands: Commands) {
+    let mut input_map = InputMap::new([
+        (KeyCode::W, PlayerInputMap::MoveForward),
+        (KeyCode::S, PlayerInputMap::MoveBackwards),
+        (KeyCode::A, PlayerInputMap::MoveLeft),
+        (KeyCode::D, PlayerInputMap::MoveRight),
+        (KeyCode::LShift, PlayerInputMap::Run),
+        (KeyCode::RShift, PlayerInputMap::Run),
+        (KeyCode::Space, PlayerInputMap::Jump),
+        (KeyCode::LControl, PlayerInputMap::Crouch),
+        (KeyCode::RControl, PlayerInputMap::Crouch),
+    ]);
+    input_map.insert(DualAxis::mouse_motion(), PlayerInputMap::PanCamera);
     commands
         .spawn_bundle(TransformBundle::from(Transform::from_xyz(0.0, 138.0, 0.0)))
         .insert(RigidBody::Dynamic)
@@ -26,6 +52,10 @@ fn player_setup(mut commands: Commands) {
         .insert(Ccd::enabled())
         .insert(Sleeping::disabled())
         .insert(PlayerController::default())
+        .insert_bundle(InputManagerBundle::<PlayerInputMap> {
+            action_state: ActionState::default(),
+            input_map,
+        })
         .insert_bundle(VisibilityBundle::default())
         .with_children(|v| {
             v.spawn_bundle(Camera3dBundle {
@@ -54,31 +84,29 @@ impl Default for PlayerController {
 const PITCH_BOUND: f32 = std::f32::consts::FRAC_PI_2 - 1E-3;
 const LAG_WEIGHT: f32 = 0.8;
 
+type PlayerQuery<'a> = (
+    &'a ActionState<PlayerInputMap>,
+    &'a mut PlayerController,
+    &'a ReadMassProperties,
+    &'a Velocity,
+    &'a mut ExternalForce,
+    &'a mut ExternalImpulse,
+    &'a mut Transform,
+);
+
 fn control_system(
-    keyboard: Res<Input<KeyCode>>,
-    mut mouse_motion_events: EventReader<MouseMotion>,
-    mut controllers: Query<(
-        &mut PlayerController,
-        &ReadMassProperties,
-        &Velocity,
-        &mut ExternalForce,
-        &mut ExternalImpulse,
-        &mut Transform,
-    )>,
+    mut controllers: Query<PlayerQuery>,
     mut cameras: Query<&mut Transform, (With<Camera3d>, Without<PlayerController>)>,
     time: Res<Time>,
 ) {
-    let (mut controller, mass, vel, mut force, mut impulse, mut transform) =
+    let (action, mut controller, mass, vel, mut force, mut impulse, mut transform) =
         controllers.single_mut();
     let mut head_transform = cameras.single_mut();
     let dt = time.delta_seconds();
 
-    let mut cursor_delta = Vec2::ZERO;
-    for event in mouse_motion_events.iter() {
-        cursor_delta -= event.delta;
-    }
-
+    let mut cursor_delta = -action.axis_pair(PlayerInputMap::PanCamera).unwrap().xy();
     cursor_delta *= controller.mouse_rotate_sensitivity;
+
     let old = controller.yaw_pitch;
     controller.yaw_pitch += cursor_delta;
     controller.yaw_pitch.y = controller.yaw_pitch.y.clamp(-PITCH_BOUND, PITCH_BOUND);
@@ -98,22 +126,27 @@ fn control_system(
     let mut desired_velocity = Vec3::ZERO;
 
     for dir in [
-        (KeyCode::W, forward),
-        (KeyCode::S, -forward),
-        (KeyCode::D, right),
-        (KeyCode::A, -right),
-        (KeyCode::Space, Vec3::Y),
-        (KeyCode::LShift, -Vec3::Y),
+        (PlayerInputMap::MoveForward, forward),
+        (PlayerInputMap::MoveBackwards, -forward),
+        (PlayerInputMap::MoveRight, right),
+        (PlayerInputMap::MoveLeft, -right),
+        (PlayerInputMap::Jump, Vec3::Y),
+        (PlayerInputMap::Crouch, -Vec3::Y),
     ]
     .iter()
-    .filter(|(key, _)| keyboard.pressed(*key))
+    .filter(|(key, _)| action.pressed(*key))
     .map(|(_, dir)| dir)
     {
         desired_velocity += *dir;
     }
 
+    let speed = if action.pressed(PlayerInputMap::Run) {
+        12.0
+    } else {
+        8.0
+    };
     desired_velocity = if desired_velocity.length_squared() > 1E-6 {
-        desired_velocity.normalize() * 8.0
+        desired_velocity.normalize() * speed
     } else {
         vel.linvel * 0.5 * xz
     };
