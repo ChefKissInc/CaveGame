@@ -1,6 +1,7 @@
 use bevy::prelude::*;
 use bevy_atmosphere::prelude::*;
 use bevy_rapier3d::prelude::*;
+use iyes_loopless::prelude::*;
 use leafwing_input_manager::prelude::*;
 
 pub struct PlayerPlugin;
@@ -20,10 +21,15 @@ enum PlayerInputMap {
 impl Plugin for PlayerPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugin(AtmospherePlugin)
-            .insert_resource(AtmosphereSettings { resolution: 1024 })
+            .insert_resource(AtmosphereSettings { resolution: 2048 })
             .add_plugin(InputManagerPlugin::<PlayerInputMap>::default())
-            .add_startup_system(player_setup)
-            .add_system(control_system);
+            .add_enter_system(crate::AppState::InGame, player_setup)
+            .add_system_set(
+                ConditionSet::new()
+                    .run_in_state(crate::AppState::InGame)
+                    .with_system(control_system)
+                    .into(),
+            );
     }
 }
 
@@ -104,7 +110,10 @@ fn control_system(
     let mut head_transform = cameras.single_mut();
     let dt = time.delta_seconds();
 
-    let mut cursor_delta = -action.axis_pair(PlayerInputMap::PanCamera).unwrap().xy();
+    let mut cursor_delta = -action
+        .axis_pair(PlayerInputMap::PanCamera)
+        .unwrap_or_default()
+        .xy();
     cursor_delta *= controller.mouse_rotate_sensitivity;
 
     let old = controller.yaw_pitch;

@@ -2,34 +2,40 @@ use bevy::{
     diagnostic::{Diagnostics, FrameTimeDiagnosticsPlugin},
     prelude::*,
 };
+use iyes_loopless::prelude::*;
 
 pub struct HudPlugin;
 
 impl Plugin for HudPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugin(FrameTimeDiagnosticsPlugin::default())
-            .add_startup_system(hud_setup)
-            .add_system(hud_system);
+            .add_enter_system(crate::AppState::InGame, hud_setup)
+            .add_system_set(
+                ConditionSet::new()
+                    .run_in_state(crate::AppState::InGame)
+                    .with_system(hud_system)
+                    .into(),
+            );
     }
 }
 
 #[derive(Component)]
 struct FpsText;
 
-fn hud_setup(mut commands: Commands, asset_server: Res<AssetServer>) {
+fn hud_setup(mut commands: Commands, res: Res<super::resources::GameResources>) {
     commands
         .spawn_bundle(
             TextBundle::from_sections([
                 TextSection::new(
                     "FPS: ",
                     TextStyle {
-                        font: asset_server.load("fonts/Iosevka NF.ttf"),
+                        font: res.font.clone(),
                         font_size: 20.0,
                         color: Color::WHITE,
                     },
                 ),
                 TextSection::from_style(TextStyle {
-                    font: asset_server.load("fonts/Iosevka NF.ttf"),
+                    font: res.font.clone(),
                     font_size: 20.0,
                     color: Color::GOLD,
                 }),
@@ -47,7 +53,7 @@ fn hud_setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         TextBundle::from_section(
             "+",
             TextStyle {
-                font: asset_server.load("fonts/Iosevka NF.ttf"),
+                font: res.font.clone(),
                 font_size: 40.0,
                 color: Color::WHITE,
             },

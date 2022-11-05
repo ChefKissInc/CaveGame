@@ -1,5 +1,6 @@
 use bevy::{prelude::*, render::view::NoFrustumCulling};
 use bevy_rapier3d::prelude::*;
+use iyes_loopless::prelude::*;
 use noise::OpenSimplex;
 
 pub mod world;
@@ -8,7 +9,7 @@ pub struct TerrainPlugin;
 
 impl Plugin for TerrainPlugin {
     fn build(&self, app: &mut App) {
-        app.add_startup_system(terrain_setup);
+        app.add_enter_system(crate::AppState::InGame, terrain_setup);
     }
 }
 
@@ -16,10 +17,9 @@ fn terrain_setup(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
-    asset_server: Res<AssetServer>,
+    res: Res<super::resources::GameResources>,
 ) {
     let simplex = OpenSimplex::new(rand::random());
-    let texture = asset_server.load("textures/blocks/grass_block_top.ktx2");
 
     for x in 0..10 {
         for z in 0..10 {
@@ -34,7 +34,7 @@ fn terrain_setup(
                     mesh: meshes.add(mesh),
                     material: materials.add(StandardMaterial {
                         base_color: Color::GREEN,
-                        base_color_texture: Some(texture.clone()),
+                        base_color_texture: Some(res.block_textures.clone()),
                         alpha_mode: AlphaMode::Opaque,
                         metallic: 0.0,
                         perceptual_roughness: 1.0,

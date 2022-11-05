@@ -1,10 +1,19 @@
 #![warn(clippy::cargo, unused_extern_crates)]
 
 use bevy::{prelude::*, render::texture::ImageSettings};
+use bevy_egui::EguiPlugin;
 use bevy_inspector_egui::WorldInspectorPlugin;
 use bevy_rapier3d::prelude::*;
+use iyes_loopless::prelude::*;
+use iyes_progress::ProgressPlugin;
 
 mod plugins;
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+enum AppState {
+    Splash,
+    InGame,
+}
 
 fn main() {
     App::new()
@@ -16,12 +25,25 @@ fn main() {
         .insert_resource(ImageSettings::default_nearest())
         .add_plugins(DefaultPlugins)
         .add_plugin(RapierPhysicsPlugin::<NoUserData>::default())
+        .add_plugin(EguiPlugin)
         .add_plugin(WorldInspectorPlugin::new())
-        .add_startup_system(setup)
+        .add_loopless_state(AppState::Splash)
+        .add_plugin(
+            ProgressPlugin::new(AppState::Splash)
+                .continue_to(AppState::InGame)
+                .track_assets(),
+        )
+        .add_enter_system(AppState::InGame, setup)
+        .add_plugin(plugins::resources::GameResourcePlugin)
         .add_plugin(plugins::terrain::TerrainPlugin)
         .add_plugin(plugins::hud::HudPlugin)
         .add_plugin(plugins::player::PlayerPlugin)
-        .add_system(cursor_lock_manager)
+        .add_system_set(
+            ConditionSet::new()
+                .run_in_state(AppState::InGame)
+                .with_system(cursor_lock_manager)
+                .into(),
+        )
         .run();
 }
 
