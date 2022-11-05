@@ -65,7 +65,7 @@ fn hud_system(diagnostics: Res<Diagnostics>, mut query: Query<&mut Text, With<Fp
     for mut text in &mut query {
         if let Some(fps) = diagnostics.get(FrameTimeDiagnosticsPlugin::FPS) {
             if let Some(average) = fps.average() {
-                text.sections[1].value = format!("{average:#.2}");
+                text.sections[1].value = format!("{}", average.ceil());
             }
         }
     }
