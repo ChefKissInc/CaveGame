@@ -1,3 +1,5 @@
+#![warn(clippy::cargo, unused_extern_crates)]
+
 use bevy::{prelude::*, render::texture::ImageSettings};
 use bevy_inspector_egui::WorldInspectorPlugin;
 use bevy_rapier3d::prelude::*;
@@ -8,7 +10,7 @@ fn main() {
     App::new()
         .insert_resource(Msaa { samples: 4 })
         .insert_resource(WindowDescriptor {
-            title: "cave game".to_owned(),
+            title: "Cave Game (Working Title)".to_owned(),
             ..default()
         })
         .insert_resource(ImageSettings::default_nearest())

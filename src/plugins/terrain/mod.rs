@@ -19,7 +19,7 @@ fn terrain_setup(
     asset_server: Res<AssetServer>,
 ) {
     let simplex = OpenSimplex::new(rand::random());
-    let texture = asset_server.load("textures/grass_block_top.png");
+    let texture = asset_server.load("textures/blocks/grass_block_top.ktx2");
 
     for x in 0..10 {
         for z in 0..10 {
@@ -37,7 +37,7 @@ fn terrain_setup(
                         base_color_texture: Some(texture.clone()),
                         alpha_mode: AlphaMode::Opaque,
                         metallic: 0.0,
-                        perceptual_roughness: 0.7,
+                        perceptual_roughness: 1.0,
                         ..default()
                     }),
                     transform: Transform::from_translation(Vec3::new(
