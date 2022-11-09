@@ -24,12 +24,7 @@ impl Plugin for PlayerPlugin {
             .insert_resource(AtmosphereSettings { resolution: 2048 })
             .add_plugin(InputManagerPlugin::<PlayerInputMap>::default())
             .add_enter_system(crate::AppState::InGame, player_setup)
-            .add_system_set(
-                ConditionSet::new()
-                    .run_in_state(crate::AppState::InGame)
-                    .with_system(control_system)
-                    .into(),
-            );
+            .add_system(control_system.run_in_state(crate::AppState::InGame));
     }
 }
 

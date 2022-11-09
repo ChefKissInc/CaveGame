@@ -38,12 +38,7 @@ fn main() {
         .add_plugin(plugins::terrain::TerrainPlugin)
         .add_plugin(plugins::hud::HudPlugin)
         .add_plugin(plugins::player::PlayerPlugin)
-        .add_system_set(
-            ConditionSet::new()
-                .run_in_state(AppState::InGame)
-                .with_system(cursor_lock_manager)
-                .into(),
-        )
+        .add_system(cursor_lock_manager.run_in_state(crate::AppState::InGame))
         .run();
 }
 

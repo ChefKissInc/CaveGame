@@ -10,12 +10,7 @@ impl Plugin for HudPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugin(FrameTimeDiagnosticsPlugin::default())
             .add_enter_system(crate::AppState::InGame, hud_setup)
-            .add_system_set(
-                ConditionSet::new()
-                    .run_in_state(crate::AppState::InGame)
-                    .with_system(hud_system)
-                    .into(),
-            );
+            .add_system(hud_system.run_in_state(crate::AppState::InGame));
     }
 }
 

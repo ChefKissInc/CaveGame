@@ -16,8 +16,12 @@ impl Plugin for GameResourcePlugin {
             .add_system_set(
                 ConditionSet::new()
                     .run_in_state(crate::AppState::Splash)
-                    .with_system(loading_screen)
                     .into(),
+            )
+            .add_system(
+                loading_screen
+                    .run_in_state(crate::AppState::Splash)
+                    .after(ProgressSystemLabel::Tracking),
             );
     }
 }
@@ -38,8 +42,6 @@ fn load_assets(
 }
 
 fn loading_screen(mut egui_context: ResMut<EguiContext>, counter: Res<ProgressCounter>) {
-    let total = counter.progress().total;
-    let done = counter.progress().done;
     egui::Window::new("loading_screen")
         .title_bar(false)
         .resizable(false)
@@ -48,12 +50,16 @@ fn loading_screen(mut egui_context: ResMut<EguiContext>, counter: Res<ProgressCo
             ui.vertical_centered_justified(|ui| {
                 ui.heading("ChefKiss Inc");
                 ui.add(
-                    egui::ProgressBar::new(total as f32 / done as f32)
+                    egui::ProgressBar::new(counter.progress().into())
                         .animate(true)
                         .show_percentage(),
                 );
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Min), |ui| {
-                    ui.label(format!("Loading {done}/{total}"));
+                    ui.label(format!(
+                        "Loading {}/{}",
+                        counter.progress().done,
+                        counter.progress().total
+                    ));
                 });
             });
         });
