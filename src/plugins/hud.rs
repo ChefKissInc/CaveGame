@@ -19,7 +19,7 @@ struct FpsText;
 
 fn hud_setup(mut commands: Commands, res: Res<super::resources::GameResources>) {
     commands
-        .spawn_bundle(
+        .spawn(
             TextBundle::from_sections([
                 TextSection::new(
                     "FPS: ",
@@ -44,7 +44,7 @@ fn hud_setup(mut commands: Commands, res: Res<super::resources::GameResources>) 
         )
         .insert(FpsText);
 
-    commands.spawn_bundle(
+    commands.spawn(
         TextBundle::from_section(
             "+",
             TextStyle {

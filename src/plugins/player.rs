@@ -21,7 +21,10 @@ enum PlayerInputMap {
 impl Plugin for PlayerPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugin(AtmospherePlugin)
-            .insert_resource(AtmosphereSettings { resolution: 2048 })
+            .insert_resource(AtmosphereSettings {
+                resolution: 2048,
+                ..default()
+            })
             .add_plugin(InputManagerPlugin::<PlayerInputMap>::default())
             .add_enter_system(crate::AppState::InGame, player_setup)
             .add_system(control_system.run_in_state(crate::AppState::InGame));
@@ -42,28 +45,32 @@ fn player_setup(mut commands: Commands) {
     ]);
     input_map.insert(DualAxis::mouse_motion(), PlayerInputMap::PanCamera);
     commands
-        .spawn_bundle(TransformBundle::from(Transform::from_xyz(0.0, 138.0, 0.0)))
-        .insert(RigidBody::Dynamic)
-        .insert(Velocity::default())
-        .insert(ExternalForce::default())
-        .insert(ExternalImpulse::default())
-        .insert(ReadMassProperties::default())
-        .insert(LockedAxes::ROTATION_LOCKED)
-        .insert(Collider::cuboid(0.5, 1.0, 0.5))
-        .insert(Ccd::enabled())
-        .insert(Sleeping::disabled())
-        .insert(PlayerController::default())
-        .insert_bundle(InputManagerBundle::<PlayerInputMap> {
-            action_state: ActionState::default(),
-            input_map,
-        })
-        .insert_bundle(VisibilityBundle::default())
+        .spawn((
+            TransformBundle::from(Transform::from_xyz(0.0, 138.0, 0.0)),
+            RigidBody::Dynamic,
+            Velocity::default(),
+            ExternalForce::default(),
+            ExternalImpulse::default(),
+            ReadMassProperties::default(),
+            LockedAxes::ROTATION_LOCKED,
+            Collider::cuboid(0.5, 1.0, 0.5),
+            Ccd::enabled(),
+            Sleeping::disabled(),
+            PlayerController::default(),
+            InputManagerBundle::<PlayerInputMap> {
+                action_state: ActionState::default(),
+                input_map,
+            },
+            VisibilityBundle::default(),
+        ))
         .with_children(|v| {
-            v.spawn_bundle(Camera3dBundle {
-                transform: Transform::from_xyz(0.0, 1.0, 0.0),
-                ..default()
-            })
-            .insert(AtmosphereCamera(None));
+            v.spawn((
+                Camera3dBundle {
+                    transform: Transform::from_xyz(0.0, 1.0, 0.0),
+                    ..default()
+                },
+                AtmosphereCamera::default(),
+            ));
         });
 }
 

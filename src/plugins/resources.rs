@@ -5,6 +5,7 @@ use iyes_progress::prelude::*;
 
 pub struct GameResourcePlugin;
 
+#[derive(Resource)]
 pub struct GameResources {
     pub font: Handle<Font>,
     pub block_textures: Handle<Image>,

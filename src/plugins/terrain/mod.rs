@@ -27,10 +27,9 @@ fn terrain_setup(
             chunk.generate(&simplex, (x * world::CHUNK_WIDTH, z * world::CHUNK_WIDTH));
             let mesh = chunk.create_mesh();
 
-            commands
-                .spawn()
-                .insert(Collider::from_bevy_mesh(&mesh, &ComputedColliderShape::TriMesh).unwrap())
-                .insert_bundle(PbrBundle {
+            commands.spawn((
+                Collider::from_bevy_mesh(&mesh, &ComputedColliderShape::TriMesh).unwrap(),
+                PbrBundle {
                     mesh: meshes.add(mesh),
                     material: materials.add(StandardMaterial {
                         base_color: Color::GREEN,
@@ -46,8 +45,9 @@ fn terrain_setup(
                         -(5.0 * world::CHUNK_WIDTH as f32) + z as f32 * world::CHUNK_WIDTH as f32,
                     )),
                     ..default()
-                })
-                .insert(NoFrustumCulling);
+                },
+                NoFrustumCulling,
+            ));
         }
     }
 }

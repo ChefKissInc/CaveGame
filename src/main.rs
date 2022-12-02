@@ -1,6 +1,6 @@
 #![warn(clippy::cargo, unused_extern_crates)]
 
-use bevy::{prelude::*, render::texture::ImageSettings};
+use bevy::prelude::*;
 use bevy_egui::EguiPlugin;
 use bevy_inspector_egui::WorldInspectorPlugin;
 use bevy_rapier3d::prelude::*;
@@ -18,12 +18,17 @@ enum AppState {
 fn main() {
     App::new()
         .insert_resource(Msaa { samples: 4 })
-        .insert_resource(WindowDescriptor {
-            title: "Cave Game (Working Title)".to_owned(),
-            ..default()
-        })
-        .insert_resource(ImageSettings::default_nearest())
-        .add_plugins(DefaultPlugins)
+        .add_plugins(
+            DefaultPlugins
+                .set(ImagePlugin::default_nearest())
+                .set(WindowPlugin {
+                    window: WindowDescriptor {
+                        title: "Cave Game (Working Title)".to_owned(),
+                        ..default()
+                    },
+                    ..default()
+                }),
+        )
         .add_plugin(RapierPhysicsPlugin::<NoUserData>::default())
         .add_plugin(EguiPlugin)
         .add_plugin(WorldInspectorPlugin::new())
@@ -44,10 +49,10 @@ fn main() {
 
 fn setup(mut commands: Commands, mut windows: ResMut<Windows>) {
     let window = windows.get_primary_mut().unwrap();
-    window.set_cursor_lock_mode(true);
+    window.set_cursor_grab_mode(bevy::window::CursorGrabMode::Locked);
     window.set_cursor_visibility(false);
 
-    commands.spawn_bundle(DirectionalLightBundle {
+    commands.spawn(DirectionalLightBundle {
         directional_light: DirectionalLight {
             illuminance: 32000.0,
             ..default()
@@ -73,11 +78,11 @@ fn cursor_lock_manager(
 ) {
     let window = windows.get_primary_mut().unwrap();
     if input.just_pressed(KeyCode::Escape) {
-        window.set_cursor_lock_mode(false);
+        window.set_cursor_grab_mode(bevy::window::CursorGrabMode::None);
         window.set_cursor_visibility(true);
     }
     if mouse_button_input.just_pressed(MouseButton::Left) {
-        window.set_cursor_lock_mode(true);
+        window.set_cursor_grab_mode(bevy::window::CursorGrabMode::Locked);
         window.set_cursor_visibility(false);
     }
 }

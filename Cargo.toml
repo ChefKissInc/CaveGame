@@ -13,7 +13,7 @@ lto = true
 strip = true
 
 [dependencies]
-bevy = { version = "0.8.1", default-features = false, features = [
+bevy = { version = "0.9.1", default-features = false, features = [
   "animation",
   "bevy_asset",
   "bevy_gilrs",
@@ -30,15 +30,15 @@ bevy = { version = "0.8.1", default-features = false, features = [
   "zstd",
   "x11",
 ] }
-bevy-inspector-egui = { version = "0.13.0", features = [
+bevy-inspector-egui = { version = "0.14.0", features = [
   "bevy_render",
   "nightly",
 ] }
-bevy_atmosphere = "0.4.1"
-bevy_egui = { version = "0.16.1" }
-bevy_rapier3d = { version = "0.18.0", features = ["parallel", "simd-nightly"] }
-iyes_loopless = "0.8.0"
-iyes_progress = { version = "0.6.0", features = ["assets", "iyes_loopless"] }
-leafwing-input-manager = "0.6.1"
+bevy_atmosphere = "0.5.0"
+bevy_egui = { version = "0.17.1" }
+bevy_rapier3d = { version = "0.19.0", features = ["parallel", "simd-nightly"] }
+iyes_loopless = "0.9.1"
+iyes_progress = { version = "0.7.1", features = ["assets", "iyes_loopless"] }
+leafwing-input-manager = "0.7.0"
 noise = { version = "0.8.2", features = ["std"] }
 rand = "0.8.5"
