@@ -1,4 +1,11 @@
-#![warn(clippy::cargo, unused_extern_crates)]
+#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+#![deny(
+    warnings,
+    clippy::cargo,
+    clippy::nursery,
+    unused_extern_crates,
+    rust_2021_compatibility
+)]
 
 use bevy::prelude::*;
 use bevy_egui::EguiPlugin;
